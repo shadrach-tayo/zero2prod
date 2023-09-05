@@ -6,3 +6,10 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+actix-web = "4.4.0"
+env_logger = "0.10.0"
+log = "0.4.20"
+serde = "1.0.188"
+serde_derive = "1.0.188"
+serde_json = "1.0.105"
+tokio = { version = "1", features = ["macros", "rt-multi-thread"] }
