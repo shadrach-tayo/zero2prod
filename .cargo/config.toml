@@ -1,6 +1,6 @@
-# On MacOS, `brew install michaeleisel/zld/zld`
-#[target.x86_64-apple-darwin]
-#rustflags = ["-C", "link-arg=-fuse-ld=/usr/local/bin/zld"]
-#
-#[target.aarch64-apple-darwin]
-#rustflags = ["-C", "link-arg=-fuse-ld=/usr/local/bin/zld"]
+# On MacOS, `brew install michaeleisel/zld/zld` (apple silicon)
+[target.x86_64-apple-darwin]
+rustflags = ["-C", "link-arg=-fuse-ld=/opt/homebrew/opt/zld/bin/zld"]
+
+[target.aarch64-apple-darwin]
+rustflags = ["-C", "link-arg=-fuse-ld=/opt/homebrew/opt/zld/bin/zld"]

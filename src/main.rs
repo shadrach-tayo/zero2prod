@@ -3,7 +3,7 @@ use actix_web::{middleware, web, App, HttpRequest, HttpServer, Responder, HttpRe
 
 async fn greet(req: HttpRequest) -> impl Responder {
     let name = req.match_info().get("name").unwrap_or("world");
-    format!("Hello {}!", name)
+    format!("Hellos {}!", name)
 }
 
 async fn health_check() -> impl Responder {
