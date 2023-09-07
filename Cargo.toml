@@ -2,6 +2,17 @@
 name = "zero2prod"
 version = "0.1.0"
 edition = "2021"
+authors = ["Shadrach Tayo"]
+
+[lib]
+name = "zero2prod"
+path = "src/lib.rs"
+
+# Notice the double square brackets: it's an array in TOML's syntax.
+# We can only have one library in a project, but we can have multiple binaries!
+[[bin]]
+path = "src/main.rs"
+name = "zero2prod"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
@@ -13,3 +24,7 @@ serde = "1.0.188"
 serde_derive = "1.0.188"
 serde_json = "1.0.105"
 tokio = { version = "1", features = ["macros", "rt-multi-thread"] }
+#reqwest = { version = "0.11", default-features = false, features = ["json", "rustls-tls", "cookies"] }
+
+[dev-dependencies]
+reqwest = "0.11.18"
