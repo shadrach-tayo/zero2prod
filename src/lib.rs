@@ -1,6 +1,7 @@
 use std::net::TcpListener;
 use actix_web::{middleware, web, App, HttpServer};
 use actix_web::dev::Server;
+use sqlx::{PgConnection, PgPool};
 
 use crate::routes::{health_check, subscribe, SubscribeParams};
 
@@ -11,17 +12,19 @@ pub mod startup;
 async fn index(form: web::Form<SubscribeParams>) -> String {
     format!("Welcome {}!", form.name)
 }
-pub fn run(listener: TcpListener) -> Result<Server, std::io::Error> {
+pub fn run(listener: TcpListener, db_pool: PgPool) -> Result<Server, std::io::Error> {
     // let port = env::args().nth(1).unwrap_or("8000".to_string());
     // env_logger::init_from_env(env_logger::Env::new().default_filter_or("info"));
     // log::info!("starting server at http://localhost:{}", port);
     let port = listener.local_addr().unwrap().port();
+    let connection = web::Data::new(db_pool);
     let server = HttpServer::new(move || {
         App::new()
             .wrap(middleware::Logger::default())
             .route("/", web::get().to(index))
             .route("/health_check", web::get().to(health_check))
             .route("/subscriptions", web::post().to(subscribe))
+            .app_data(connection.clone())
     })
         .listen(listener)?
         // .bind(("127.0.0.1:8000", port.parse().unwrap()))?
