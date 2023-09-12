@@ -19,14 +19,16 @@ name = "zero2prod"
 [dependencies]
 actix-web = "4.4.0"
 config = "0.13.3"
-env_logger = "0.10.0"
-log = "0.4.20"
 serde = "1.0.188"
 serde_derive = "1.0.188"
 serde_json = "1.0.105"
 tokio = { version = "1", features = ["macros", "rt-multi-thread"] }
 uuid = { version = "1", features = ["v4"] }
 chrono = { version = "0.4.22", default-features = false, features = ["clock"] }
+tracing = { version = "0.1", features = ["log"] }
+tracing-subscriber = { version = "0.3", features = ["registry", "env-filter"] }
+tracing-bunyan-formatter = "0.3"
+tracing-log = "0.1"
 #reqwest = { version = "0.11", default-features = false, features = ["json", "rustls-tls", "cookies"] }
 
 [dev-dependencies]

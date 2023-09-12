@@ -8,15 +8,14 @@ use crate::routes::{health_check, subscribe, SubscribeParams};
 pub mod configuration;
 pub mod routes;
 pub mod startup;
+pub mod telemetry;
 
 async fn index(form: web::Form<SubscribeParams>) -> String {
     format!("Welcome {}!", form.name)
 }
 pub fn run(listener: TcpListener, db_pool: PgPool) -> Result<Server, std::io::Error> {
-    // let port = env::args().nth(1).unwrap_or("8000".to_string());
-    // env_logger::init_from_env(env_logger::Env::new().default_filter_or("info"));
-    // log::info!("starting server at http://localhost:{}", port);
     let port = listener.local_addr().unwrap().port();
+    tracing::info!("starting server at http://localhost:{}", port);
     let connection = web::Data::new(db_pool);
     let server = HttpServer::new(move || {
         App::new()
@@ -27,8 +26,6 @@ pub fn run(listener: TcpListener, db_pool: PgPool) -> Result<Server, std::io::Er
             .app_data(connection.clone())
     })
         .listen(listener)?
-        // .bind(("127.0.0.1:8000", port.parse().unwrap()))?
         .run();
-    println!("server running on {}.....", port);
     Ok(server)
 }
