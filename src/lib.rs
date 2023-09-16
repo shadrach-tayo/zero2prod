@@ -14,18 +14,5 @@ async fn index(form: web::Form<SubscribeParams>) -> String {
     format!("Welcome {}!", form.name)
 }
 pub fn run(listener: TcpListener, db_pool: PgPool) -> Result<Server, std::io::Error> {
-    let port = listener.local_addr().unwrap().port();
-    tracing::info!("starting server at http://localhost:{}", port);
-    let connection = web::Data::new(db_pool);
-    let server = HttpServer::new(move || {
-        App::new()
-            .wrap(middleware::Logger::default())
-            .route("/", web::get().to(index))
-            .route("/health_check", web::get().to(health_check))
-            .route("/subscriptions", web::post().to(subscribe))
-            .app_data(connection.clone())
-    })
-        .listen(listener)?
-        .run();
-    Ok(server)
+    startup::run(listener, db_pool)
 }
