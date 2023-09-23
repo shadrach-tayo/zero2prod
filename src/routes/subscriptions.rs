@@ -3,8 +3,7 @@ use serde_derive::{Deserialize, Serialize};
 use sqlx::{PgPool};
 use sqlx::types::{chrono, uuid};
 use uuid::Uuid;
-use self::chrono::Utc;
-use tracing::{Instrument};
+// use tracing::{Instrument};
 
 #[derive(Serialize, Deserialize)]
 pub struct SubscribeParams {
@@ -47,7 +46,7 @@ pub async fn insert_subscriber(
         Uuid::new_v4(),
         form.email,
         form.name,
-        Utc::now()
+        chrono::Utc::now()
     )
         .execute(pool)
         .await

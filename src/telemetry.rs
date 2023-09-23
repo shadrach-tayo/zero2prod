@@ -4,7 +4,6 @@ use tracing::subscriber::set_global_default;
 use tracing_bunyan_formatter::{BunyanFormattingLayer, JsonStorageLayer};
 use tracing_subscriber::{layer::SubscriberExt, EnvFilter, Registry};
 use tracing_subscriber::fmt::MakeWriter;
-use tracing_actix_web::TracingLogger;
 
 /// Compose multiple layers into a `tracing`'s subscriber.
 ///

@@ -1,8 +1,8 @@
 use crate::{health_check, subscribe};
 use std::net::TcpListener;
-use actix_web::{middleware, web, App, HttpServer};
+use actix_web::{web, App, HttpServer};
 use actix_web::dev::Server;
-use sqlx::{PgConnection, PgPool};
+use sqlx::{PgPool};
 use tracing_actix_web::TracingLogger;
 pub fn run(listener: TcpListener, db_pool: PgPool) -> Result<Server, std::io::Error> {
     let port = listener.local_addr().unwrap().port();
