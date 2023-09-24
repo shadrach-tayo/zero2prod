@@ -16,7 +16,8 @@ async fn main() -> Result<(), std::io::Error> {
         let connection_string = settings.database.connection_string();
         let connection_pool = PgPoolOptions::new()
             .acquire_timeout(std::time::Duration::from_secs(2))
-            .connect_lazy(&connection_string.expose_secret()).expect("Failed to get connection");
+            .connect_lazy_with(settings.database.with_db());
+            // .connect_lazy(&connection_string.expose_secret()).expect("Failed to get connection");
         let listener = TcpListener::bind(address).expect("Failed to bind port");
         // tracing::info!("listener {}", listener.local_add);
         run(listener, connection_pool)?.await
