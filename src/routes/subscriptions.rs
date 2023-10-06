@@ -65,11 +65,28 @@ pub async fn subscribe(
         Err(_) => return HttpResponse::InternalServerError().finish(),
     };
 
-    let subscriber_id = match insert_subscriber(&new_subscriber, &mut transaction).await {
+    let subscriber_id = match get_subscriber_id_by_email(&pool, &new_subscriber).await {
         Ok(subscriber_id) => subscriber_id,
-        Err(_) => return HttpResponse::InternalServerError().finish(),
+        Err(_) => {
+            tracing::info!("No duplicate subscriber found!, Creating new...");
+            let subscriber_id = match insert_subscriber(&new_subscriber, &mut transaction).await {
+                Ok(subscriber_id) => subscriber_id,
+                Err(_) => {
+                    return HttpResponse::InternalServerError().finish();
+                }
+            };
+            subscriber_id
+        }
     };
 
+    // let subscriber_id = match insert_subscriber(&new_subscriber, &mut transaction).await {
+    //     Ok(subscriber_id) => subscriber_id,
+    //     Err(_) => {
+    //         return HttpResponse::InternalServerError().finish();
+    //     }
+    // };
+
+    tracing::info!("Proceed with adding subscriber");
     let subscription_token = generate_subscription_token();
     if store_token(&mut transaction, subscriber_id, &subscription_token)
         .await
@@ -173,10 +190,44 @@ pub async fn store_token(
     .execute(transaction)
     .await
     .map_err(|e| {
+        dbg!(&e);
         tracing::error!("Failed to execute query: {:?}", e);
         e
     })?;
     Ok(subscriber_id)
+}
+
+#[tracing::instrument(
+    name = "Get subscriber id by email from the database",
+    skip(pool, new_subscriber,)
+)]
+pub async fn get_subscriber_id_by_email(
+    pool: &PgPool,
+    new_subscriber: &NewSubscriber,
+) -> Result<Uuid, sqlx::Error> {
+    let record = sqlx::query!(
+        r#"SELECT id FROM subscriptions WHERE email = $1"#,
+        new_subscriber.email.as_ref()
+    )
+    .fetch_one(pool)
+    .await
+    // {
+    //     Ok(record) => Some(record.unwrap().id),
+    //     Err(e) => {
+    //         tracing::info!(" ==================================== Subscriber Not found ==================================== ");
+    //         tracing::info!(" ==================================== Error ==================================== {:?}", e);
+    //         None
+    //     }
+    // }
+    .map_err(|e| {
+        tracing::error!(
+            "[get_subscriber_id_by_email]::Failed to execute query: {:?}",
+            e
+        );
+        e
+    })?;
+    // Some(result.unwrap().id)
+    Ok(record.id)
 }
 
 /// Returns `true` if the input satisfies all our validation constraints

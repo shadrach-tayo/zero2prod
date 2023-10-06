@@ -54,7 +54,7 @@ mod tests {
     #[quickcheck_macros::quickcheck]
     fn valid_email_is_accepted(valid_email: ValidEmailFixture) -> bool {
         // assert_ok!(SubscriberEmail::parse(valid_email));
-        dbg!(&valid_email.0);
+        // dbg!(&valid_email.0);
         SubscriberEmail::parse(valid_email.0).is_ok()
     }
 }

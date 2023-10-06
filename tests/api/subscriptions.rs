@@ -120,3 +120,22 @@ async fn subscribe_sends_a_confirmation_email_with_a_link() {
 
     assert_eq!(confirmation_links.html, confirmation_links.plain_text);
 }
+
+#[tokio::test]
+async fn subscribe_an_existing_subscriber_sends_confirmation_email() {
+    let app = spawn_app().await;
+    let body = "name=Temitayo&email=tayo@gmail.com";
+
+    Mock::given(path("/email"))
+        .and(method("POST"))
+        .respond_with(ResponseTemplate::new(200))
+        .expect(2)
+        .mount(&app.email_server)
+        .await;
+
+    app.post_subscriptions(body.into()).await;
+    app.post_subscriptions(body.into()).await;
+
+    let email_requests = &app.email_server.received_requests().await.unwrap();
+    assert_eq!(email_requests.len(), 2);
+}
