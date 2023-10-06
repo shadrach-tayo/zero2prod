@@ -139,3 +139,27 @@ async fn subscribe_an_existing_subscriber_sends_confirmation_email() {
     let email_requests = &app.email_server.received_requests().await.unwrap();
     assert_eq!(email_requests.len(), 2);
 }
+
+#[tokio::test]
+async fn subscribe_adds_unexpired_token_to_subscriptions_token_table() {
+    let app = spawn_app().await;
+
+    let body = "name=tay%20tayo&email=shadrachtemitayo%40gmail.com";
+
+    app.post_subscriptions(body.into()).await;
+
+    let saved = sqlx::query!("SELECT id, email, name, status FROM subscriptions")
+        .fetch_one(&app.db_pool)
+        .await
+        .expect("Failed to fetch saved subscription");
+
+    let expired = sqlx::query!(
+        "SELECT expired FROM subscription_tokens WHERE subscriber_id = $1",
+        saved.id
+    )
+    .fetch_one(&app.db_pool)
+    .await
+    .expect("Failed to fetch subscription expiry status");
+
+    assert_eq!(expired.expired, false);
+}

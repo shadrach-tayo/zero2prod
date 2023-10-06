@@ -60,3 +60,29 @@ async fn clicking_on_the_confirmation_link_confirms_a_subscriber() {
     assert_eq!(saved.email, "shadrach@gmail.com");
     assert_eq!(saved.status, "confirmed");
 }
+#[tokio::test]
+async fn clicking_on_the_confirmation_link_expires_subscription_token() {
+    let app = spawn_app().await;
+    let body = "name=shadrach&email=shadrach@gmail.com";
+
+    app.post_subscriptions(body.into()).await;
+    let email_request = &app.email_server.received_requests().await.unwrap()[0];
+    let confirmation_links = app.get_confirmation_links(&email_request);
+
+    reqwest::get(confirmation_links.html).await.unwrap();
+
+    let saved = sqlx::query!("SELECT id FROM subscriptions")
+        .fetch_one(&app.db_pool)
+        .await
+        .expect("Failed to fetch saved subscription");
+
+    let expired = sqlx::query!(
+        "SELECT expired FROM subscription_tokens WHERE subscriber_id = $1",
+        saved.id
+    )
+    .fetch_one(&app.db_pool)
+    .await
+    .expect("Failed to fetch subscription expiry status");
+
+    assert_eq!(expired.expired, true);
+}
