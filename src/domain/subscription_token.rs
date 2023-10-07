@@ -1,4 +1,3 @@
-use std::fmt::format;
 use unicode_segmentation::UnicodeSegmentation;
 
 #[derive(Debug)]
