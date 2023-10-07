@@ -1,13 +1,27 @@
+use crate::domain::SubscriberToken;
 use actix_web::{web, HttpResponse};
 use sqlx::PgPool;
 use uuid::Uuid;
+
 #[derive(serde::Deserialize, Debug)]
 pub struct Params {
     subscription_token: String,
 }
+
+impl TryFrom<String> for SubscriberToken {
+    type Error = String;
+    fn try_from(value: String) -> Result<Self, Self::Error> {
+        SubscriberToken::parse(value)
+    }
+}
 #[tracing::instrument(name = "Confirm a pending subscriber", skip(params, pool))]
 pub async fn confirm(params: web::Query<Params>, pool: web::Data<PgPool>) -> HttpResponse {
-    let id = match get_subscriber_id_from_token(&pool, &params.subscription_token).await {
+    let subscription_token: SubscriberToken = match params.subscription_token.clone().try_into() {
+        Ok(subscription_token) => subscription_token,
+        Err(_) => return HttpResponse::BadRequest().finish(),
+    };
+
+    let id = match get_subscriber_id_from_token(&pool, subscription_token.as_ref()).await {
         Ok(id) => id,
         Err(_) => return HttpResponse::InternalServerError().finish(),
     };
@@ -16,7 +30,7 @@ pub async fn confirm(params: web::Query<Params>, pool: web::Data<PgPool>) -> Htt
         None => HttpResponse::Unauthorized().finish(),
         Some(subscriber_id) => {
             if confirm_subscriber(&pool, subscriber_id).await.is_err() {}
-            if expire_subscription_token(&pool, &params.subscription_token)
+            if expire_subscription_token(&pool, subscription_token.as_ref())
                 .await
                 .is_err()
             {}
