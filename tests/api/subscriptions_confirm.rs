@@ -86,3 +86,29 @@ async fn clicking_on_the_confirmation_link_expires_subscription_token() {
 
     assert_eq!(expired.expired, true);
 }
+
+// #[tokio::test]
+// async fn confirmation_fails_if_there_is_a_fatal_database_error() {
+//     let app = spawn_app().await;
+//     let body = "name=shadrach&email=shadrach@gmail.com";
+//
+//     Mock::given(path("/email"))
+//         .and(method("POST"))
+//         .respond_with(ResponseTemplate::new(200))
+//         // .expect(1)
+//         .mount(&app.email_server)
+//         .await;
+//
+//     app.post_subscriptions(body.into()).await;
+//     let email_request = &app.email_server.received_requests().await.unwrap()[0];
+//     let confirmation_links = app.get_confirmation_links(&email_request);
+//
+//     sqlx::query!("ALTER TABLE subscription_tokens DROP COLUMN subscription_token;")
+//         .execute(&app.db_pool)
+//         .await
+//         .unwrap();
+//
+//     let response = reqwest::get(confirmation_links.html).await?;
+//
+//     assert_eq!(response.status().as_u16(), 500);
+// }

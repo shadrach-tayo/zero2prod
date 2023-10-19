@@ -8,7 +8,6 @@ use sqlx::postgres::PgPoolOptions;
 use sqlx::PgPool;
 use std::net::TcpListener;
 use tracing_actix_web::TracingLogger;
-
 pub struct Application {
     port: u16,
     server: Server,

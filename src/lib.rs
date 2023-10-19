@@ -12,6 +12,7 @@ pub mod email_client;
 pub mod routes;
 pub mod startup;
 pub mod telemetry;
+pub mod utils;
 
 // async fn index(form: web::Form<SubscribeParams>) -> String {
 //     format!("Welcome {}!", form.name)

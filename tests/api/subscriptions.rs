@@ -163,3 +163,19 @@ async fn subscribe_adds_unexpired_token_to_subscriptions_token_table() {
 
     assert_eq!(expired.expired, false);
 }
+
+#[tokio::test]
+async fn subscribe_fails_if_there_is_a_fatal_database_error() {
+    let app = spawn_app().await;
+
+    let body = "name=tay%20tayo&email=shadrachtemitayo%40gmail.com";
+
+    sqlx::query!("ALTER TABLE subscriptions DROP COLUMN email;",)
+        .execute(&app.db_pool)
+        .await
+        .unwrap();
+
+    let response = app.post_subscriptions(body.into()).await;
+
+    assert_eq!(response.status().as_u16(), 500);
+}
