@@ -8,7 +8,6 @@ use actix_web::{web, HttpResponse};
 use anyhow::Context;
 use rand::distributions::Alphanumeric;
 use rand::{thread_rng, Rng};
-use reqwest::Error;
 use serde_derive::{Deserialize, Serialize};
 use sqlx::types::{chrono, uuid};
 use sqlx::{PgPool, Postgres, Transaction};
@@ -187,7 +186,7 @@ pub async fn send_confirmation_email(
     );
 
     email_client
-        .send_email(new_subscriber.email, "Welcome!", &html_body, &plain_body)
+        .send_email(&new_subscriber.email, "Welcome!", &html_body, &plain_body)
         .await
 }
 
