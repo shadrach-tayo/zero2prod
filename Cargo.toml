@@ -41,6 +41,7 @@ rand = { version = "0.8", features=["std_rng"] }
 thiserror = "1"
 anyhow = "1"
 base64 = "0.21"
+argon2 = { version = "0.4", features = ["std"] }
 
 [dev-dependencies]
 once_cell = "1"
