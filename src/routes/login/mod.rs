@@ -1,6 +1,3 @@
-use actix_web::http::header::ContentType;
-use actix_web::HttpResponse;
-
 mod get;
 mod post;
 

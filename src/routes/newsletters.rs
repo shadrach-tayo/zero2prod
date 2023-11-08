@@ -7,7 +7,6 @@ use actix_web::http::{header, StatusCode};
 use actix_web::{web, HttpRequest, HttpResponse, ResponseError};
 use anyhow::Context;
 use base64::Engine;
-use secrecy::ExposeSecret;
 use secrecy::Secret;
 use sqlx::PgPool;
 use std::fmt::Formatter;
