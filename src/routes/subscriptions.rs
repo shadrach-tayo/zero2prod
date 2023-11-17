@@ -129,10 +129,9 @@ pub async fn subscribe(
         Ok(subscriber_id) => subscriber_id,
         Err(_) => {
             tracing::info!("No duplicate subscriber found!, Creating new...");
-            let subscriber_id = insert_subscriber(&new_subscriber, &mut transaction)
+            insert_subscriber(&new_subscriber, &mut transaction)
                 .await
-                .context("Failed to insert new subscriber in the database.")?;
-            subscriber_id
+                .context("Failed to insert new subscriber in the database.")?
         }
     };
 
@@ -210,11 +209,7 @@ pub async fn insert_subscriber(
         chrono::Utc::now()
     )
     .execute(transaction)
-    .await
-    .map_err(|e| {
-        // tracing::error!("Failed to execute query: {:?}", e);
-        e
-    })?;
+    .await?;
     Ok(subscriber_id)
 }
 
@@ -286,5 +281,5 @@ pub fn is_valid_name(s: &str) -> bool {
 
     let forbidden_characters = ['/', '(', ')', '"', '<', '>', '\\', '{', '}'];
     let contains_forbidden_characters = s.chars().any(|g| forbidden_characters.contains(&g));
-    return !(is_empty_or_whitespace || is_too_long || contains_forbidden_characters);
+    !(is_empty_or_whitespace || is_too_long || contains_forbidden_characters)
 }

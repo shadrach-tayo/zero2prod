@@ -10,6 +10,7 @@ pub struct Settings {
     pub database: DatabaseSettings,
     pub application: ApplicationSettings,
     pub email_client: EmailClientSettings,
+    pub redis_uri: Secret<String>,
 }
 
 #[derive(Deserialize, Clone)]
@@ -60,7 +61,7 @@ impl DatabaseSettings {
         PgConnectOptions::new()
             .host(&self.host)
             .username(&self.username)
-            .password(&self.password.expose_secret())
+            .password(self.password.expose_secret())
             .port(self.port)
             .ssl_mode(ssl_mode)
     }

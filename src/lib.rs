@@ -6,15 +6,16 @@
 
 use crate::routes::{health_check, subscribe};
 
+// pub mod authentication;
 pub mod authentication;
 pub mod configuration;
 pub mod domain;
 pub mod email_client;
 pub mod routes;
+pub mod session_state;
 pub mod startup;
 pub mod telemetry;
 pub mod utils;
-
 // async fn index(form: web::Form<SubscribeParams>) -> String {
 //     format!("Welcome {}!", form.name)
 // }
