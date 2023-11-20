@@ -14,6 +14,15 @@ pub fn error_chain_fmt(
     Ok(())
 }
 
+// Return a 400with the user-representation of the validation error as body.
+// The error root cause is preserved for logging purposes.
+pub fn e400<T>(e: T) -> actix_web::Error
+where
+    T: std::fmt::Debug + std::fmt::Display + 'static,
+{
+    actix_web::error::ErrorBadRequest(e)
+}
+
 pub fn e500<T>(e: T) -> actix_web::Error
 where
     T: std::fmt::Debug + std::fmt::Display + 'static,

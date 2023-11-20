@@ -41,7 +41,6 @@ impl std::fmt::Display for UserId {
 
 impl Deref for UserId {
     type Target = Uuid;
-
     fn deref(&self) -> &Self::Target {
         &self.0
     }

@@ -1,10 +1,10 @@
 use actix_web::http::header::ContentType;
-use actix_web_flash_messages::IncomingFlashMessages;
+use actix_web_flash_messages::{FlashMessage, IncomingFlashMessages};
 
 use crate::authentication::{Credentials, UserId};
 use crate::domain::SubscriberEmail;
 use crate::email_client::EmailClient;
-use crate::utils::error_chain_fmt;
+use crate::utils::{e400, e500, error_chain_fmt, see_other};
 use actix_web::http::header::{HeaderMap, HeaderValue};
 use actix_web::http::{header, StatusCode};
 use actix_web::{web, HttpResponse, ResponseError};
@@ -48,10 +48,11 @@ impl ResponseError for PublishError {
 }
 
 #[derive(serde::Deserialize)]
-pub struct BodyData {
+pub struct FormData {
     title: String,
     html_content: String,
     text_content: String,
+    idempotency_key: String,
 }
 
 #[derive(serde::Deserialize)]
@@ -62,34 +63,44 @@ pub struct Content {
 
 #[tracing::instrument(
     name = "Publish a newsletter issue",
-    skip(body, pool, email_client, user_id),
+    skip(form, pool, email_client, user_id),
     fields(username=tracing::field::Empty, user_id=tracing::field::Empty)
 )]
 pub async fn publish_newsletter(
-    body: web::Form<BodyData>,
+    form: web::Form<FormData>,
     pool: web::Data<PgPool>,
     email_client: web::Data<EmailClient>,
     user_id: web::ReqData<UserId>,
-) -> Result<HttpResponse, PublishError> {
+) -> Result<HttpResponse, actix_web::Error> {
     let user_id = user_id.into_inner();
     tracing::Span::current().record("user_id", &tracing::field::display(&user_id));
 
-    let subscribers = get_confirmed_subscribers(&pool).await?;
+    let FormData {
+        title,
+        html_content,
+        text_content,
+        idempotency_key,
+    } = form.0;
+    let idempotency_key: IdempotencyKey = idempotency_key.try_into().map_err(e400)?;
+    if let Some(saved_response) = get_saved_response(&pool, &idempotency_key, *user_id)
+        .await
+        .map_err(e500)?
+    {
+        FlashMessage::info("The newsletter issue has been published!").send();
+        return Ok(saved_response);
+    }
+
+    let subscribers = get_confirmed_subscribers(&pool).await.map_err(e500)?;
     for subscriber in subscribers {
         match subscriber {
             Ok(subscriber) => {
                 email_client
-                    .send_email(
-                        &subscriber.email,
-                        &body.title,
-                        &body.html_content,
-                        // &body.content.html,
-                        &body.text_content,
-                    )
+                    .send_email(&subscriber.email, &title, &html_content, &text_content)
                     .await
                     .with_context(|| {
                         format!("Failed to send newsletter issue to {}", subscriber.email)
-                    })?;
+                    })
+                    .map_err(e500)?;
             }
             Err(error) => {
                 tracing::warn!(
@@ -104,7 +115,12 @@ pub async fn publish_newsletter(
             }
         }
     }
-    Ok(HttpResponse::Ok().finish())
+    FlashMessage::info("The newsletter issue has been published!").send();
+    let response = see_other("/admin/newsletters");
+    let response = save_response(&pool, &idempotency_key, *user_id, response)
+        .await
+        .map_err(e500)?;
+    Ok(response)
 }
 
 fn basic_authentication(headers: &HeaderMap) -> Result<Credentials, anyhow::Error> {
@@ -169,14 +185,17 @@ async fn get_confirmed_subscribers(
     Ok(confirmed_subscribers)
 }
 
+use crate::idempotency::{get_saved_response, save_response, IdempotencyKey};
 use std::fmt::Write;
+
 pub async fn newsletters(
     flash_messages: IncomingFlashMessages,
 ) -> Result<HttpResponse, actix_web::Error> {
-    let mut error_html = String::new();
+    let mut messages = String::new();
     for m in flash_messages.iter() {
-        writeln!(error_html, "<p><i>{}</i></p>", m.content()).unwrap();
+        writeln!(messages, "<p><i>{}</i></p>", m.content()).unwrap();
     }
+    let idempotency_key = uuid::Uuid::new_v4();
     Ok(HttpResponse::Ok()
         .content_type(ContentType::html())
         .body(format!(
@@ -187,7 +206,7 @@ pub async fn newsletters(
         <title>Issue newsletter</title>
     </head>
     <body>
-        {error_html}
+        {messages}
         <form action="/admin/newsletters" method="post">
             <label>Title
                 <input
@@ -197,14 +216,23 @@ pub async fn newsletters(
                         required
                 >
             </label>
-            <label>Newsletter body
+            <label>HTML content
                 <textarea
                         // type="text"
                         placeholder="Enter newsletter content"
-                        name="content"
+                        name="html_content"
                         required
                 >
             </label>
+            <label>Text content
+                <textarea
+                        // type="text"
+                        placeholder="Enter newsletter content"
+                        name="text_content"
+                        required
+                >
+            </label>
+            <input hidden type="text" name="idempotency_key" value="{idempotency_key}">
             <button type="submit">Login</button>
         </form>
     </body>
