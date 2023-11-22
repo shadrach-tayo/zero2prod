@@ -28,19 +28,7 @@ pub struct Application {
 impl Application {
     pub async fn build(settings: Settings) -> Result<Self, anyhow::Error> {
         let connection_pool = get_connection_pool(&settings.database);
-
-        let sender_email = settings
-            .email_client
-            .sender()
-            .expect("Invalid sender email address");
-        let timeout = settings.email_client.timeout();
-        let email_client = EmailClient::new(
-            settings.email_client.base_url,
-            sender_email,
-            settings.email_client.authorization_token,
-            timeout,
-        );
-
+        let email_client = settings.email_client.client();
         let address = format!(
             "{}:{}",
             settings.application.host, settings.application.port
