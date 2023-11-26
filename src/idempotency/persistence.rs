@@ -144,7 +144,10 @@ pub async fn try_processing(
         let saved_response = get_saved_response(&pool, &idempotency_key, user_id)
             .await?
             .ok_or_else(|| anyhow::anyhow!("We expected a saved response, we didn't find it"))?;
-        // .map_err(e500)?;
+
+        // todo: check if saved_response.expires_at > MAX_IDEMPOTENCY_TIMEOUT
+        // TODO: if idempotency key has expired return OK(NextAction::StartProcessing(t))
+
         Ok(NextAction::ReturnSavedResponse(saved_response))
     }
 }

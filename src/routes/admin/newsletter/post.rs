@@ -84,7 +84,7 @@ pub async fn publish_newsletter(
 
     let issue_id = insert_newsletter_issue(&mut transaction, &title, &text_content, &html_content)
         .await
-        .context("Failed to store newsetter issue details")
+        .context("Failed to store newsletter issue details")
         .map_err(e500)?;
 
     enqueue_delivery_tasks(&mut transaction, issue_id)
